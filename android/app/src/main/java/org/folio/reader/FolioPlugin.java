@@ -859,7 +859,75 @@ public class FolioPlugin extends Plugin {
     @PluginMethod public void stopSpeaking(PluginCall call) {
         getActivity().runOnUiThread(() -> { finalUtterance = ""; speechOffsets.clear(); getContext().stopService(new Intent(getContext(), AudioService.class)); if (speech != null) speech.stop(); call.resolve(); });
     }
+    private KindleShare kindleShare;
+    private final java.util.LinkedHashMap<String, KindleShare.Book> kindleBooks = new java.util.LinkedHashMap<>();
+    private File kindleFolder() { return new File(getContext().getCacheDir(), "kindle-share"); }
+    private synchronized void stopKindleSession() {
+        if (kindleShare != null) { kindleShare.close(); kindleShare=null; }
+        getActivity().runOnUiThread(() -> getActivity().getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
+    }
+    @PluginMethod public void beginKindleShare(PluginCall call) {
+        work.execute(() -> { synchronized (this) {
+            stopKindleSession(); kindleBooks.clear();
+            File folder=kindleFolder(); File[] files=folder.listFiles();
+            if (files!=null) for(File f:files) f.delete();
+            if(!folder.isDirectory() && !folder.mkdirs()) { call.reject("Não foi possível preparar o compartilhamento.");return; }
+            call.resolve();
+        }});
+    }
+    @PluginMethod public void putKindleBook(PluginCall call) {
+        work.execute(() -> { synchronized(this) { try {
+            String id=call.getString("id", ""); long offset=call.getLong("offset", -1L);
+            String encoded=call.getString("base64", "");
+            if(!id.matches("[a-f0-9]{64}") || encoded.length()>400000) throw new UserError("Bloco de livro inválido.");
+            if(kindleShare!=null && kindleShare.running()) throw new UserError("Encerre o catálogo antes de alterar os livros.");
+            File folder=kindleFolder(); if(!folder.isDirectory()) throw new UserError("Prepare uma sessão primeiro.");
+            File file=new File(folder,id+".epub");
+            if(offset<0 || (file.exists()?file.length():0)!=offset) throw new UserError("Transferência fora de ordem.");
+            byte[] data=Base64.decode(encoded,Base64.NO_WRAP);
+            if(offset+data.length>MAX_DOWNLOAD) throw new UserError("Cada livro pode ter até 40 MB.");
+            File[] files=folder.listFiles(); long total=0; if(files!=null) for(File f:files) total+=f.length();
+            if(total+data.length>200L*1024*1024) throw new UserError("Selecione até 200 MB por sessão.");
+            try(FileOutputStream out=new FileOutputStream(file,true)) { out.write(data); }
+            if(call.getBoolean("complete",false)) {
+                if(kindleBooks.size()>=10) throw new UserError("Selecione até 10 livros por sessão.");
+                java.security.MessageDigest digest=java.security.MessageDigest.getInstance("SHA-256");
+                try(InputStream in=new FileInputStream(file)) {byte[] buffer=new byte[65536];int n;while((n=in.read(buffer))!=-1)digest.update(buffer,0,n);}
+                StringBuilder hash=new StringBuilder();for(byte b:digest.digest())hash.append(String.format("%02x",b&255));
+                if(!id.equals(hash.toString())) throw new UserError("Falha na verificação do EPUB.");
+                String title=call.getString("title","Livro"), author=call.getString("author","");
+                if(title.length()>500 || author.length()>500) throw new UserError("Metadados muito longos.");
+                kindleBooks.put(id,new KindleShare.Book(id,title,author,file));
+            }
+            call.resolve();
+        } catch(Exception e) {call.reject(e instanceof UserError?e.getMessage():"Não foi possível preparar o EPUB.");} }});
+    }
+    @PluginMethod public void startKindleShare(PluginCall call) {
+        work.execute(() -> { synchronized(this) { try {
+            stopKindleSession();
+            if(kindleBooks.isEmpty()) throw new UserError("Selecione pelo menos um livro.");
+            android.net.ConnectivityManager manager=(android.net.ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            android.net.Network network=manager.getActiveNetwork();
+            android.net.NetworkCapabilities capabilities=manager.getNetworkCapabilities(network);
+            if(capabilities==null || (!capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI) || capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN))) throw new UserError("Conecte o celular e o Kindle à mesma rede Wi-Fi, sem VPN.");
+            android.net.LinkProperties properties=manager.getLinkProperties(network); InetAddress address=null;
+            if(properties!=null) for(android.net.LinkAddress link:properties.getLinkAddresses())
+                if(link.getAddress() instanceof java.net.Inet4Address && link.getAddress().isSiteLocalAddress()) {address=link.getAddress();break;}
+            if(address==null) throw new UserError("Esta rede não oferece um endereço IPv4 local compatível.");
+            kindleShare=new KindleShare(address,new java.util.ArrayList<>(kindleBooks.values()));
+            JSObject result=new JSObject();result.put("url",kindleShare.url());result.put("expiresAt",kindleShare.expiresAt());
+            getActivity().runOnUiThread(() -> getActivity().getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON));
+            call.resolve(result);
+        } catch(Exception e) {call.reject(e instanceof UserError?e.getMessage():"Não foi possível iniciar o catálogo Wi-Fi.");} }});
+    }
+    @PluginMethod public void stopKindleShare(PluginCall call) { stopKindleSession();call.resolve(); }
+    @PluginMethod public void kindleShareStatus(PluginCall call) { synchronized(this) {
+        if(kindleShare!=null && !kindleShare.running()) stopKindleSession();
+        JSObject result=new JSObject();result.put("running",kindleShare!=null && kindleShare.running());call.resolve(result);
+    }}
+    @Override protected void handleOnPause() { stopKindleSession(); }
     @Override protected void handleOnDestroy() {
+        stopKindleSession();
         getContext().stopService(new Intent(getContext(),AudioService.class));AudioService.stopAudio=null;
         work.shutdownNow(); if (client != null) client.dispatcher().cancelAll();
         if (speech != null) { speech.stop(); speech.shutdown(); speechReady = false; }

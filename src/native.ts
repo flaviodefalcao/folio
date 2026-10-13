@@ -10,6 +10,11 @@ interface NativeAPI {
     eventName: string,
     listener: (data: any) => void,
   ): Promise<PluginListenerHandle>;
+  beginKindleShare(): Promise<void>;
+  putKindleBook(input: {id: string; offset: number; base64: string; complete: boolean; title?: string; author?: string}): Promise<void>;
+  startKindleShare(): Promise<{url: string; expiresAt: number}>;
+  stopKindleShare(): Promise<void>;
+  kindleShareStatus(): Promise<{running: boolean}>;
   setAppTheme(input: { theme: string }): Promise<void>;
   setImmersive(input: { enabled: boolean }): Promise<void>;
   speak(input: {
@@ -121,6 +126,11 @@ export function initializeNative() {
     ),
   );
   window.folio = {
+    beginKindleShare: () => native.beginKindleShare(),
+    putKindleBook: (input) => native.putKindleBook(input),
+    startKindleShare: () => native.startKindleShare(),
+    stopKindleShare: () => native.stopKindleShare(),
+    kindleShareStatus: () => native.kindleShareStatus(),
     searchBooks: (input) => native.searchBooks(input),
     searchCatalog: (input) => native.searchCatalog(input),
     openCatalog: (url, options) => native.openCatalog({ url, ...options }),

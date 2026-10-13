@@ -6,7 +6,7 @@ Folio is an independent implementation inspired by familiar reading features. Th
 
 ## Download and install
 
-**[Download Folio 0.7.0 for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.7.0/Folio-Android-v0.7.0.apk)**
+**[Download Folio 0.8.0 for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.8.0/Folio-Android-v0.8.0.apk)**
 
 Requires **Android 7.0 (API 24) or later** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
 
@@ -174,3 +174,11 @@ Device-specific voices, long-running background playback, and native system-bar 
 ## Current scope
 
 Folio currently supports EPUB reading, synthetic narration, local organization, statistics, and the integrations described above. It does not provide cross-device synchronization, an Amazon store or Kindle Unlimited access, AZW/KFX/MOBI/PDF reading, DRM removal, X-Ray, popular highlights, integrated translation, or a recorded audiobook catalog. Dictionary lookups open an external service.
+
+## Kindle connection (Android 0.8.0)
+
+A jailbroken Kindle running KOReader can download selected EPUBs from Folio over the same trusted Wi-Fi network. In Folio, open **More → Connect Kindle**, select up to 10 books (40 MB per book, 200 MB per session), and start sharing. Add the displayed URL as an OPDS catalog in KOReader and download a book. Keep Folio in the foreground while downloading.
+
+The catalog uses local HTTP, a new random eight-digit access code for every session (the session closes after ten unauthorized requests), an IPv4 Wi-Fi address, and a 15-minute lifetime. It closes when Folio leaves the foreground or the connection screen closes. Only selected EPUBs are served; API keys, annotations, conversations, and other private app files are excluded. Use a trusted network; HTTP traffic is not encrypted. Guest networks with client isolation and active VPNs may prevent connection.
+
+This is a book-transfer integration. Reading positions, annotations, metrics, and Kindle extension updates are **not synchronized yet**. The Android APK itself does not run on a Kindle e-reader.

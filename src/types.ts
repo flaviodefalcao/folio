@@ -72,6 +72,11 @@ export type ChatRequest = {
 declare global {
   interface Window {
     folio?: {
+      beginKindleShare?(): Promise<void>;
+      putKindleBook?(input: {id: string; offset: number; base64: string; complete: boolean; title?: string; author?: string}): Promise<void>;
+      startKindleShare?(): Promise<{url: string; expiresAt: number}>;
+      stopKindleShare?(): Promise<void>;
+      kindleShareStatus?(): Promise<{running: boolean}>;
       setAppTheme?(theme: "dark" | "light"): Promise<void>;
       setImmersive?(enabled: boolean): Promise<void>;
       speak?(

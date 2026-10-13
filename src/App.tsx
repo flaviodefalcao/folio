@@ -28,6 +28,7 @@ import {
 import { loadBooks, saveBook, deleteBook, importEpub } from "./books";
 import type { BookRecord, Settings } from "./types";
 import { loadMetrics, recordCompletion } from "./metrics-store";
+const KindleConnect = lazy(() => import("./KindleConnect"));
 const Catalog = lazy(() => import("./CatalogView"));
 const Statistics = lazy(() => import("./Statistics"));
 const NextReads = lazy(() => import("./NextReads"));
@@ -94,7 +95,7 @@ export default function App() {
   });
   const [libraryOptions, setLibraryOptions] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const isBookView = !["next", "discover", "statistics", "notes"].includes(
+  const isBookView = !["next", "discover", "statistics", "notes", "kindle"].includes(
     view,
   );
   useEffect(() => {
@@ -435,6 +436,7 @@ export default function App() {
             Descobrir livros
             <ArrowUpRight size={15} />
           </button>
+          <button className="nav-item" onClick={() => setView("kindle")}><BookOpen size={19} />Conectar Kindle</button>
           <button className="nav-item" onClick={() => setModal("settings")}>
             <SettingsIcon size={19} />
             Preferências
@@ -520,6 +522,7 @@ export default function App() {
           >
             Coleções
           </button>
+          <button onClick={() => {setView("kindle");setMoreOpen(false);}}>Conectar Kindle</button>
           <button onClick={() => setMoreOpen(false)}>Fechar</button>
         </div>
       )}
@@ -539,7 +542,9 @@ export default function App() {
             <div className="breadcrumb">
               Minha biblioteca <ChevronRight size={14} />
               <span>
-                {view === "discover"
+                {view === "kindle"
+                  ? "Kindle"
+                  : view === "discover"
                   ? "Descobrir"
                   : view === "notes"
                     ? "Notas"
@@ -686,7 +691,9 @@ export default function App() {
               </button>
             </div>
           )}
-          {view === "next" ? (
+          {view === "kindle" ? (
+            <Suspense fallback={<p>Preparando conexão…</p>}><KindleConnect books={books} onClose={() => setView("library")} /></Suspense>
+          ) : view === "next" ? (
             <Suspense fallback={<p>Preparando sugestões…</p>}>
               <NextReads
                 books={books}
@@ -1024,7 +1031,7 @@ export default function App() {
                 <span>
                   <BookOpen size={14} /> Feito para ler, pensar e descobrir.
                 </span>
-                <span>Folio · v0.7.0</span>
+                <span>Folio · v0.8.0</span>
               </footer>
             </>
           )}
