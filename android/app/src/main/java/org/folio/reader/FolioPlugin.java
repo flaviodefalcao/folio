@@ -875,9 +875,16 @@ public class FolioPlugin extends Plugin {
             call.resolve();
         }});
     }
+    // JSON uses Integer for small offsets; Capacitor getLong only accepts Long.
+    static long kindleOffset(Object value) {
+        if (!(value instanceof Number)) return -1L;
+        double number=((Number)value).doubleValue();
+        if (Double.isNaN(number) || Double.isInfinite(number) || number<0 || number>MAX_DOWNLOAD || number!=Math.floor(number)) return -1L;
+        return ((Number)value).longValue();
+    }
     @PluginMethod public void putKindleBook(PluginCall call) {
         work.execute(() -> { synchronized(this) { try {
-            String id=call.getString("id", ""); long offset=call.getLong("offset", -1L);
+            String id=call.getString("id", ""); long offset=kindleOffset(call.getData().opt("offset"));
             String encoded=call.getString("base64", "");
             if(!id.matches("[a-f0-9]{64}") || encoded.length()>400000) throw new UserError("Bloco de livro inválido.");
             if(kindleShare!=null && kindleShare.running()) throw new UserError("Encerre o catálogo antes de alterar os livros.");

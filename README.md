@@ -6,7 +6,7 @@ Folio is an independent implementation inspired by familiar reading features. Th
 
 ## Download and install
 
-**[Download Folio 0.8.0 for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.8.0/Folio-Android-v0.8.0.apk)**
+**[Download Folio 0.8.1 for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.8.1/Folio-Android-v0.8.1.apk)**
 
 Requires **Android 7.0 (API 24) or later** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
 
