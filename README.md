@@ -182,3 +182,7 @@ A jailbroken Kindle running KOReader can download selected EPUBs from Folio over
 The catalog uses local HTTP, a new random eight-digit access code for every session (the session closes after ten unauthorized requests), an IPv4 Wi-Fi address, and a 15-minute lifetime. It closes when Folio leaves the foreground or the connection screen closes. Only selected EPUBs are served; API keys, annotations, conversations, and other private app files are excluded. Use a trusted network; HTTP traffic is not encrypted. Guest networks with client isolation and active VPNs may prevent connection.
 
 This is a book-transfer integration. Reading positions, annotations, metrics, and Kindle extension updates are **not synchronized yet**. The Android APK itself does not run on a Kindle e-reader.
+
+## Folio Kindle extension and audio
+
+The optional [Folio KOReader extension](kindle/README.md) adds a Portuguese Folio menu for the phone OPDS catalog and the independently installed Audiobook Read-Along plugin. The audio plugin provides read-along, voice controls, and Bluetooth playback on supported devices; actual playback must be verified with headphones. The extension is separate from the Android APK. The current compact KT4 installation excludes optional Piper files due to storage limits.
