@@ -1,3 +1,4 @@
+export type NeuralVoice = {id: string; name: string; language: string; bytes: number; installed: boolean};
 export type Chapter = { id: string; label: string; href: string; text: string };
 export type Annotation = {
   id: string;
@@ -72,6 +73,8 @@ export type ChatRequest = {
 declare global {
   interface Window {
     folio?: {
+      neuralVoices?(): Promise<{voices: NeuralVoice[]}>;
+      downloadNeuralVoice?(id: string): Promise<void>;
       beginKindleShare?(): Promise<void>;
       putKindleBook?(input: {id: string; offset: number; base64: string; complete: boolean; title?: string; author?: string}): Promise<void>;
       startKindleShare?(): Promise<{url: string; expiresAt: number}>;

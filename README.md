@@ -2,13 +2,13 @@
 
 An open-source EPUB reader for Android with a local library, text-to-speech narration, reading statistics, and book conversations powered by the OpenAI API.
 
-Folio is an independent implementation inspired by familiar reading features. The project is MIT-licensed; dependencies retain their own licenses. The current app interface is in Portuguese. This README uses English descriptions and includes Portuguese labels where useful.
+Folio is an independent implementation inspired by familiar reading features. The original Folio source is MIT-licensed; dependencies retain their own licenses. Neural Android binaries include GPL-3.0 components; see [runtime notices](NEURAL-NOTICES.md). The current app interface is in Portuguese. This README uses English descriptions and includes Portuguese labels where useful.
 
 ## Download and install
 
-**[Download Folio 0.8.1 for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.8.1/Folio-Android-v0.8.1.apk)**
+**[Download Folio 0.9.0 beta for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.9.0/Folio-Android-v0.9.0.apk)**
 
-Requires **Android 7.0 (API 24) or later** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
+Requires **Android 7.0 (API 24) or later on an ARM device (arm64-v8a or armeabi-v7a)** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
 
 To update an existing Folio installation, install the new APK **without uninstalling**. Official releases use the same package name and signing key to preserve local data. The APK is distributed directly through GitHub Releases and is not listed on Google Play.
 
@@ -186,3 +186,11 @@ This is a book-transfer integration. Reading positions, annotations, metrics, an
 ## Folio Kindle extension and audio
 
 The optional [Folio KOReader extension](kindle/README.md) adds a Portuguese Folio menu for the phone OPDS catalog and the independently installed Audiobook Read-Along plugin. The audio plugin provides read-along, voice controls, and Bluetooth playback on supported devices; actual playback must be verified with headphones. The extension is separate from the Android APK. The current compact KT4 installation excludes optional Piper files due to storage limits.
+
+## Built-in offline neural voices (Android 0.9.0)
+
+Open a book, open the audio player, and choose **Voice and language → Offline neural voices**. Download **Faber (Brazilian Portuguese)** or **Lessac (American English)**, approximately 67 MB each. Folio verifies each archive against a pinned SHA-256 digest and installs it in private app storage. After downloading, select the neural voice and start narration. No separate TTS application, API key, or subscription is required. Internet access is used for downloading the voice; synthesis and playback run on the device.
+
+Neural narration preserves the existing speed controls, timer, text transition, and background audio service. Progress follows sentences; within-sentence timing is estimated from playback duration. Generation speed and battery usage depend on the phone. Initial model loading and sentence generation can introduce pauses. Downloading requires at least 300 MB of free storage for installation. Keep the app open during the download.
+
+The original Folio source remains MIT-licensed. The neural Android binary includes GPL-3.0 eSpeak components and is distributed under GPL-3.0 terms for the combined binary. See [neural runtime notices and corresponding source links](NEURAL-NOTICES.md). The pinned runtime is downloaded by `scripts/prepare-neural-runtime.py` during the Android build; the AAR is excluded from Git.

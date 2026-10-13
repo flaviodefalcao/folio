@@ -15,6 +15,7 @@ import {
   Volume2,
   X,
 } from "lucide-react";
+import NeuralVoices from "./NeuralVoices";
 import { audioChapters, audioSegments } from "./audio";
 import type { BookRecord, Chapter } from "./types";
 type Voice = { id: string; name: string; language: string; network: boolean };
@@ -787,6 +788,10 @@ export default function AudioPlayer({
                   ))}
               </select>
             </label>
+            <NeuralVoices onUse={(id, locale) => {
+              change(() => {setLanguage(locale);setVoice("neural:"+id);});
+              void window.folio?.speechVoices?.().then(result => setVoices(result.voices)).catch(err => setError(err.message));
+            }} />
             <label>
               Velocidade: {rate}×
               <input

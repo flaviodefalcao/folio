@@ -26,3 +26,5 @@ research/
 *.epub
 !public/sample.epub
 *.log
+
+android/app/libs/*.aar

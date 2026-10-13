@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 source scripts/android-env.sh
+python3 scripts/prepare-neural-runtime.py
 npm run build
 npx cap sync android
 mkdir -p .toolchain

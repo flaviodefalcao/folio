@@ -2938,3 +2938,10 @@ h1 span {
 .kindle-connect {display: grid; gap: 18px;}
 .kindle-connect > button {justify-self: start; min-height: 44px; padding: 12px 18px;}
 .kindle-connect input {max-width: 100%;}
+
+.neural-voices {grid-column:1/-1;display:grid;gap:12px;padding:16px;background:var(--surface);border:1px solid var(--border);border-radius:12px;}
+.neural-voices p {font-size:12px;line-height:1.5;color:var(--secondary);}
+.neural-voice {display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.neural-voice small {display:block;margin-top:4px;font-size:11px;color:var(--secondary);}
+.neural-voice button {padding:8px 12px;border:1px solid var(--border);border-radius:8px;}
+.neural-voices progress {width:100%;}

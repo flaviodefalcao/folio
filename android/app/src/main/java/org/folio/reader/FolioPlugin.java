@@ -76,6 +76,9 @@ public class FolioPlugin extends Plugin {
     private final AnnaPremium premium = new AnnaPremium();
     private OkHttpClient client;
     private String catalogUserAgent = "Folio/0.3 Android";
+    private NeuralVoiceModels neuralModels;
+    private NeuralNarrator neuralNarrator;
+    private final AtomicBoolean neuralDownloading=new AtomicBoolean();
     private TextToSpeech speech;
     private volatile boolean speechReady = false;
     private volatile String finalUtterance = "";
@@ -87,6 +90,12 @@ public class FolioPlugin extends Plugin {
             if (preferences.getString("model", "gpt-6-astra").equals("gpt-6-astra")) migration.putString("model", "gpt-5-nano");
             migration.commit();
         }
+        neuralModels=new NeuralVoiceModels(getContext());
+        neuralNarrator=new NeuralNarrator(getContext(),neuralModels,new NeuralNarrator.Events() {
+            public void progress(int offset) {JSObject data=new JSObject();data.put("offset",offset);notifyListeners("speechProgress",data);}
+            public void ended() {notifyListeners("speechEnded",new JSObject());}
+            public void error() {getContext().stopService(new Intent(getContext(),AudioService.class));notifyListeners("speechError",new JSObject());}
+        });
         client = publicClient();
         try { catalogUserAgent = getBridge().getWebView().getSettings().getUserAgentString(); } catch (Exception ignored) {}
         premium.userAgent(catalogUserAgent);
@@ -802,20 +811,50 @@ public class FolioPlugin extends Plugin {
     @PluginMethod public void speechTimer(PluginCall call) { AudioService.schedule(call.getLong("sleepUntil",0L));call.resolve(); }
     @PluginMethod public void speechVoices(PluginCall call) {
         getActivity().runOnUiThread(() -> {
-            if (!speechReady || speech == null) { call.reject("Voz ainda indisponível. Tente novamente."); return; }
             com.getcapacitor.JSArray voices = new com.getcapacitor.JSArray();
-            if (speech.getVoices() != null) for (android.speech.tts.Voice voice : speech.getVoices()) {
+            if (speechReady && speech != null && speech.getVoices() != null) for (android.speech.tts.Voice voice : speech.getVoices()) {
                 JSObject item = new JSObject(); item.put("id", voice.getName()); item.put("name", voice.getName());
                 item.put("language", voice.getLocale().toLanguageTag()); item.put("network", voice.isNetworkConnectionRequired()); voices.put(item);
             }
+            for(NeuralVoiceModels.Model model:NeuralVoiceModels.MODELS)if(neuralModels.installed(model)) {
+                JSObject item=new JSObject();item.put("id","neural:"+model.id);item.put("name",model.name+" · neural");item.put("language",model.language);item.put("network",false);voices.put(item);
+            }
             JSObject result = new JSObject(); result.put("voices", voices); call.resolve(result);
         });
+    }
+    @PluginMethod public void neuralVoices(PluginCall call) {
+        com.getcapacitor.JSArray array=new com.getcapacitor.JSArray();
+        for(NeuralVoiceModels.Model model:NeuralVoiceModels.MODELS) {
+            JSObject item=new JSObject();item.put("id",model.id);item.put("name",model.name);item.put("language",model.language);item.put("bytes",model.bytes);item.put("installed",neuralModels.installed(model));array.put(item);
+        }
+        JSObject result=new JSObject();result.put("voices",array);call.resolve(result);
+    }
+    @PluginMethod public void downloadNeuralVoice(PluginCall call) {
+        if(!neuralDownloading.compareAndSet(false,true)){call.reject("Aguarde o download atual.");return;}
+        work.execute(() -> {try {
+            NeuralVoiceModels.Model model=NeuralVoiceModels.model(call.getString("id",""));
+            neuralModels.download(model,percent -> {JSObject data=new JSObject();data.put("id",model.id);data.put("percent",percent);notifyListeners("neuralDownloadProgress",data);});
+            call.resolve();
+        }catch(Exception e){call.reject(e.getMessage()==null?"Não foi possível instalar a voz.":e.getMessage());}finally{neuralDownloading.set(false);}});
     }
     private final java.util.concurrent.ConcurrentHashMap<String, Integer> speechOffsets = new java.util.concurrent.ConcurrentHashMap<>();
     @PluginMethod public void speak(PluginCall call) {
         try {
             String text = string(call.getData(), "text", 500000, false);
             getActivity().runOnUiThread(() -> {
+                String selected=call.getString("voice", "");
+                if(selected.startsWith("neural:")) {
+                    try {
+                        NeuralVoiceModels.Model model=NeuralVoiceModels.model(selected.substring(7));
+                        if(!neuralModels.installed(model)){call.reject("Baixe esta voz neural antes de ouvir.");return;}
+                        finalUtterance="";speechOffsets.clear();if(speech!=null)speech.stop();
+                        AudioService.stopAudio=()->{neuralNarrator.stop();notifyListeners("speechStopped",new JSObject());};
+                        Intent service=new Intent(getContext(),AudioService.class);service.putExtra("sleepUntil",call.getLong("sleepUntil",0L));
+                        androidx.core.content.ContextCompat.startForegroundService(getContext(),service);
+                        neuralNarrator.speak(model,text,Math.max(0.5f,Math.min(2f,call.getFloat("rate",1f))));call.resolve();
+                    }catch(Exception e){call.reject("Não foi possível iniciar a voz neural.");}return;
+                }
+                neuralNarrator.stop();
                 if (!speechReady || speech == null) { call.reject("A voz do Android ainda não está disponível. Confira o mecanismo de texto para fala do aparelho."); return; }
                 finalUtterance=""; speechOffsets.clear(); speech.stop();
                 String language = call.getString("language", "pt-BR");
@@ -857,7 +896,7 @@ public class FolioPlugin extends Plugin {
         } catch (UserError error) { call.reject(error.getMessage()); }
     }
     @PluginMethod public void stopSpeaking(PluginCall call) {
-        getActivity().runOnUiThread(() -> { finalUtterance = ""; speechOffsets.clear(); getContext().stopService(new Intent(getContext(), AudioService.class)); if (speech != null) speech.stop(); call.resolve(); });
+        getActivity().runOnUiThread(() -> { neuralNarrator.stop(); finalUtterance = ""; speechOffsets.clear(); getContext().stopService(new Intent(getContext(), AudioService.class)); if (speech != null) speech.stop(); call.resolve(); });
     }
     private KindleShare kindleShare;
     private final java.util.LinkedHashMap<String, KindleShare.Book> kindleBooks = new java.util.LinkedHashMap<>();
@@ -935,6 +974,7 @@ public class FolioPlugin extends Plugin {
     @Override protected void handleOnPause() { stopKindleSession(); }
     @Override protected void handleOnDestroy() {
         stopKindleSession();
+        if(neuralNarrator!=null)neuralNarrator.close();
         getContext().stopService(new Intent(getContext(),AudioService.class));AudioService.stopAudio=null;
         work.shutdownNow(); if (client != null) client.dispatcher().cancelAll();
         if (speech != null) { speech.stop(); speech.shutdown(); speechReady = false; }
