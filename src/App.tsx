@@ -444,7 +444,7 @@ export default function App() {
             Descobrir livros
             <ArrowUpRight size={15} />
           </button>
-          <button className="nav-item" onClick={() => setView("kindle")}><BookOpen size={19} />Conectar Kindle</button>
+          <button className="nav-item kindle-connect-button" onClick={() => setView("kindle")}><BookOpen size={19} />Conectar Kindle</button>
           <button className="nav-item" onClick={() => setModal("settings")}>
             <SettingsIcon size={19} />
             Preferências
@@ -530,7 +530,7 @@ export default function App() {
           >
             Coleções
           </button>
-          <button onClick={() => {setView("kindle");setMoreOpen(false);}}>Conectar Kindle</button>
+          <button className="kindle-connect-button" onClick={() => {setView("kindle");setMoreOpen(false);}}>Conectar Kindle</button>
           <button onClick={() => setMoreOpen(false)}>Fechar</button>
         </div>
       )}

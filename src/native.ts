@@ -81,7 +81,9 @@ export const isAppForeground = () => foreground;
 const native = registerPlugin<NativeAPI>("FolioNative");
 export function initializeNative() {
   if (!Capacitor.isNativePlatform()) return;
+  const ios = Capacitor.getPlatform() === "ios";
   document.documentElement.classList.add("native-app");
+  if (ios) document.documentElement.classList.add("ios-app");
   const stateChanged = ({ isActive }: { isActive: boolean }) => {
     foreground = isActive;
     window.dispatchEvent(new Event("folio-app-state"));
@@ -133,6 +135,7 @@ export function initializeNative() {
   window.folio = {
     recommendationsFeed: () => native.recommendationsFeed(),
     openRecommendations: () => native.openRecommendations(),
+    ...(ios ? {} : {
     neuralVoices: () => native.neuralVoices(),
     downloadNeuralVoice: id => native.downloadNeuralVoice({id}),
     beginKindleShare: () => native.beginKindleShare(),
@@ -140,6 +143,7 @@ export function initializeNative() {
     startKindleShare: () => native.startKindleShare(),
     stopKindleShare: () => native.stopKindleShare(),
     kindleShareStatus: () => native.kindleShareStatus(),
+    }),
     searchBooks: (input) => native.searchBooks(input),
     searchCatalog: (input) => native.searchCatalog(input),
     openCatalog: (url, options) => native.openCatalog({ url, ...options }),

@@ -2956,3 +2956,5 @@ h1 span {
   .library-content,
   .library-minimal .library-content { padding-bottom:16px; }
 }
+
+.ios-app .kindle-connect-button{display:none}

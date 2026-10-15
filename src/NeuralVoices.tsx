@@ -30,6 +30,7 @@ export default function NeuralVoices({onUse}: {onUse: (id: string, language: str
     }catch(err){if(active.current)setError((err as Error).message);}
     finally{if(active.current)setDownloading("");}
   }
+  if (document.documentElement.classList.contains("ios-app")) return <section className="neural-voices" aria-label="Vozes offline do iPhone"><strong>Vozes offline do iPhone</strong><p>Selecione uma voz instalada na lista acima. Para baixar vozes aprimoradas ou premium, abra Ajustes do iPhone → Acessibilidade → Conteúdo Falado → Vozes. Os nomes podem variar conforme a versão do iOS.</p></section>;
   return <section className="neural-voices" aria-label="Vozes neurais offline">
     <strong>Vozes neurais offline · gratuitas</strong>
     <p>Baixe uma vez e ouça sem internet nem custo de API. A voz é gerada no celular. O acompanhamento dentro de cada frase é estimado.</p>

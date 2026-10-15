@@ -1,0 +1,47 @@
+name: Build iOS preview
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Select newest installed Xcode
+        run: |
+          python3 - <<'PYCODE' >> "$GITHUB_ENV"
+          import pathlib,re
+          apps=list(pathlib.Path('/Applications').glob('Xcode*.app'))
+          chosen=max(apps,key=lambda p:tuple(map(int,re.findall(r'\d+',p.name))) or (0,))
+          print('DEVELOPER_DIR='+str(chosen/'Contents/Developer'))
+          PYCODE
+      - run: npm ci
+      - run: npm run ios:prepare
+      - name: Build simulator application
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO build > ios-build.log 2>&1
+      - name: Build unsigned device application
+        run: xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath ios/DerivedData CODE_SIGNING_ALLOWED=NO build >> ios-build.log 2>&1
+      - name: Package previews
+        run: |
+          mkdir -p release/Payload
+          cp -R ios/DerivedData/Build/Products/Release-iphoneos/App.app release/Payload/Folio.app
+          cd release && zip -qr Folio-iOS-unsigned.ipa Payload
+          cd ../ios/DerivedData/Build/Products/Debug-iphonesimulator && zip -qr ../../../../../release/Folio-iOS-Simulator.zip App.app
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: Folio-iOS-preview
+          path: |
+            release/Folio-iOS-unsigned.ipa
+            release/Folio-iOS-Simulator.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: iOS-build-log
+          path: ios-build.log

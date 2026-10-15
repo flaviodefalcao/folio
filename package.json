@@ -13,13 +13,17 @@
     "build": "tsc --noEmit && vite build",
     "test": "node scripts/test.mjs",
     "package:mac": "npm run build && electron-packager . Folio --platform=darwin --arch=arm64 --out=release --overwrite --ignore='^/(release|tests|research|src|node_modules/.cache)(/|$)' --icon=public/folio.icns --app-bundle-id=org.folio.reader",
-    "android:build": "bash scripts/build-android.sh"
+    "android:build": "bash scripts/build-android.sh",
+    "ios:prepare": "npm run build && npx cap sync ios && node scripts/prepare-ios.mjs",
+    "ios:build": "bash scripts/build-ios.sh",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.92",
     "@capacitor/android": "^8.5.3",
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "8.5.3",
     "ai": "^7.0.138",
     "epubjs": "^0.3.93",
     "idb-keyval": "^6.2.2",

@@ -28,3 +28,9 @@ research/
 *.log
 
 android/app/libs/*.aar
+
+# iOS generated build state
+**/.build/
+**/Package.resolved
+*.xcarchive
+*.ipa
