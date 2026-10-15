@@ -27,6 +27,8 @@ import {
 } from "lucide-react";
 import { loadBooks, saveBook, deleteBook, importEpub } from "./books";
 import type { BookRecord, Settings } from "./types";
+import useRecommendations from "./useRecommendations";
+const Recommendations = lazy(() => import("./RecommendationsView"));
 import { loadMetrics, recordCompletion } from "./metrics-store";
 const KindleConnect = lazy(() => import("./KindleConnect"));
 const Catalog = lazy(() => import("./CatalogView"));
@@ -62,6 +64,8 @@ export default function App() {
   const [books, setBooks] = useState<BookRecord[]>([]),
     [loading, setLoading] = useState(true),
     [error, setError] = useState("");
+  const [settingsReady, setSettingsReady] = useState(!window.folio);
+  const [catalogQuery, setCatalogQuery] = useState("");
   const [active, setActive] = useState<string | null>(null),
     [view, setView] = useState("library"),
     [query, setQuery] = useState(""),
@@ -95,7 +99,7 @@ export default function App() {
   });
   const [libraryOptions, setLibraryOptions] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
-  const isBookView = !["next", "discover", "statistics", "notes", "kindle"].includes(
+  const isBookView = !["recommendations", "next", "discover", "statistics", "notes", "kindle"].includes(
     view,
   );
   useEffect(() => {
@@ -154,11 +158,15 @@ export default function App() {
     window.folio
       ?.getSettings()
       .then((s) => live && setSettings(s))
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .finally(() => live && setSettingsReady(true));
     return () => {
       live = false;
     };
   }, []);
+  const recommendations = useRecommendations(books, settings, !loading && settingsReady && !active && !busy, (book) => {
+    setBooks(all => all.some(b => b.id === book.id) ? all : [book, ...all]);
+  });
   const collectionsAll = useMemo(
     () => [
       ...new Set([
@@ -379,11 +387,11 @@ export default function App() {
             Destaques e notas
           </button>
           <button
-            className={view === "next" ? "nav-item active" : "nav-item"}
-            onClick={() => setView("next")}
+            className={view === "recommendations" ? "nav-item active" : "nav-item"}
+            onClick={() => setView("recommendations")}
           >
             <BookOpen size={19} />
-            Próximas leituras
+            Recomendações
           </button>
         </nav>
         <div className="sidebar-heading">
@@ -462,11 +470,11 @@ export default function App() {
           Descobrir livros
         </button>
         <button
-          onClick={() => setView("next")}
-          aria-current={view === "next" ? "page" : undefined}
+          onClick={() => setView("recommendations")}
+          aria-current={view === "recommendations" ? "page" : undefined}
         >
           <BookOpen size={20} />
-          Próximas
+          Recomendações
         </button>
         <button
           onClick={() => setView("statistics")}
@@ -542,7 +550,9 @@ export default function App() {
             <div className="breadcrumb">
               Minha biblioteca <ChevronRight size={14} />
               <span>
-                {view === "kindle"
+                {view === "recommendations"
+                  ? "Recomendações"
+                  : view === "kindle"
                   ? "Kindle"
                   : view === "discover"
                   ? "Descobrir"
@@ -691,7 +701,9 @@ export default function App() {
               </button>
             </div>
           )}
-          {view === "kindle" ? (
+          {view === "recommendations" ? (
+            <Suspense fallback={<p>Abrindo recomendações…</p>}><Recommendations model={recommendations} books={books} onOpen={openBook} onSearch={q => {setCatalogQuery(q); setView("discover");}} onLocal={() => setView("next")} /></Suspense>
+          ) : view === "kindle" ? (
             <Suspense fallback={<p>Preparando conexão…</p>}><KindleConnect books={books} onClose={() => setView("library")} /></Suspense>
           ) : view === "next" ? (
             <Suspense fallback={<p>Preparando sugestões…</p>}>
@@ -714,6 +726,7 @@ export default function App() {
               fallback={<div className="empty-state">Abrindo o catálogo…</div>}
             >
               <Catalog
+                initialQuery={catalogQuery}
                 settings={settings}
                 onDownload={() => setModal("download")}
                 onImport={importFiles}
@@ -1031,7 +1044,7 @@ export default function App() {
                 <span>
                   <BookOpen size={14} /> Feito para ler, pensar e descobrir.
                 </span>
-                <span>Folio · v0.9.0</span>
+                <span>Folio · v0.10.0</span>
               </footer>
             </>
           )}

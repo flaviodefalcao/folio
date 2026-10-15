@@ -25,17 +25,19 @@ import {
 import type { Settings, BookRecord, BookDownload } from "./types";
 import { openExternal, Modal } from "./App";
 export default function Catalog({
+  initialQuery = "",
   settings,
   onImport,
   onDownload,
   books,
 }: {
+  initialQuery?: string;
   settings: Settings;
   onImport: (files: File[]) => Promise<boolean | undefined>;
   onDownload: () => void;
   books: BookRecord[];
 }) {
-  const [query, setQuery] = useState(""),
+  const [query, setQuery] = useState(initialQuery),
     [language, setLanguage] = useState("pt"),
     [provider, setProvider] = useState<"gutenberg" | "anna">(settings.hasAnnaKey ? "anna" : "gutenberg"),
     [seed, setSeed] = useState<LocalCatalog | null>(null),

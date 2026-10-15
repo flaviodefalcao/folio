@@ -358,7 +358,7 @@ public class FolioPlugin extends Plugin {
     static JSONObject parseCatalogHTML(String html, HttpUrl base, int page, int status) throws Exception {
         JSONObject result = new JSONObject().put("results", new JSONArray()).put("page", page).put("hasMore", false);
         String lower = html.toLowerCase(java.util.Locale.ROOT);
-        if (status == 403 || status == 429 || lower.contains("ddos-guard") || lower.contains("cf-chl-") || lower.contains("checking your browser") || lower.contains("<title>just a moment"))
+        if (AnnaPremium.challenge(html, status))
             return result.put("challenge", true).put("error", "O catálogo exige uma verificação no site. Abra a busca dentro do Folio para continuar.");
         if (status != 200) return result.put("error", "O catálogo respondeu com status " + status + ". Tente novamente ou abra a página dentro do Folio.");
         Document document = Jsoup.parse(html, base.toString());
@@ -540,6 +540,27 @@ public class FolioPlugin extends Plugin {
                 result.put("error", "O site pediu uma verificação antes de acessar sua conta. Abra a busca dentro do Folio, conclua a verificação e tente novamente."); call.resolve(result);
             } catch (UserError error) { call.reject(error.getMessage()); }
             catch (Exception error) { call.reject("A conexão de busca não respondeu. Continue pela busca integrada para carregar os resultados do site.", "ANNA_SEARCH_NETWORK"); }
+        });
+    }
+
+    @PluginMethod public void recommendationsFeed(PluginCall call) {
+        work.execute(() -> {
+            try {
+                JSObject result = new JSObject();
+                result.put("base64", Base64.encodeToString(RecommendationsSource.fetch(client), Base64.NO_WRAP));
+                call.resolve(result);
+            } catch (Exception error) { call.reject("Não foi possível atualizar as recomendações. Confira a conexão."); }
+        });
+    }
+
+    @PluginMethod public void openRecommendations(PluginCall call) {
+        if (!catalogOpen.compareAndSet(false, true)) { call.reject("Uma página já está aberta no Folio."); return; }
+        Intent intent = new Intent(getActivity(), CatalogActivity.class)
+            .putExtra("url", RecommendationsSource.SITE).putExtra("origin", RecommendationsSource.SITE)
+            .putExtra("presentation", "recommendations");
+        getActivity().runOnUiThread(() -> {
+            try { startActivityForResult(call, intent, "catalogResult"); }
+            catch (Exception error) { catalogOpen.set(false); call.reject("Não foi possível abrir o Entrelinhas."); }
         });
     }
 
@@ -791,7 +812,7 @@ public class FolioPlugin extends Plugin {
     }
 
     @PluginMethod public void setAppTheme(PluginCall call) {
-        boolean dark="dark".equals(call.getString("theme","dark"));getActivity().runOnUiThread(()->{
+        boolean dark="dark".equals(call.getString("theme","dark")); preferences.edit().putString("appTheme", dark ? "dark" : "light").apply();getActivity().runOnUiThread(()->{
             int color=dark?android.graphics.Color.rgb(16,17,19):android.graphics.Color.rgb(247,248,250);
             getActivity().findViewById(android.R.id.content).setBackgroundColor(color);
             getActivity().getWindow().setStatusBarColor(color);getActivity().getWindow().setNavigationBarColor(color);

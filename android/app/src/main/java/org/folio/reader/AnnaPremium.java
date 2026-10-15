@@ -83,7 +83,12 @@ final class AnnaPremium {
 
     static boolean challenge(String body, int status) {
         String lower = body.toLowerCase(java.util.Locale.ROOT);
-        return status == 403 || status == 429 || lower.contains("ddos-guard") || lower.contains("cf-chl-") || lower.contains("checking your browser") || lower.contains("<title>just a moment");
+        if (status == 403 || status == 429) return true;
+        java.util.regex.Matcher title = java.util.regex.Pattern.compile("<title[^>]*>\\s*([^<]{0,200})</title>", java.util.regex.Pattern.CASE_INSENSITIVE).matcher(body);
+        String pageTitle = title.find() ? title.group(1).trim().toLowerCase(java.util.Locale.ROOT) : "";
+        // Ordinary catalog pages mention DDOS-GUARD in a JavaScript cache comment.
+        return pageTitle.equals("ddos-guard") || pageTitle.startsWith("just a moment") || pageTitle.startsWith("checking your browser")
+            || (lower.contains("cf-chl-") && !lower.contains("js-aarecord-list-outer"));
     }
 
     static final class VerificationRequired extends Exception {}

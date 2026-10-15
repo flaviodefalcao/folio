@@ -73,6 +73,8 @@ export type ChatRequest = {
 declare global {
   interface Window {
     folio?: {
+      recommendationsFeed?(): Promise<{base64: string}>;
+      openRecommendations?(): Promise<void>;
       neuralVoices?(): Promise<{voices: NeuralVoice[]}>;
       downloadNeuralVoice?(id: string): Promise<void>;
       beginKindleShare?(): Promise<void>;

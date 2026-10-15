@@ -6,7 +6,7 @@ Folio is an independent implementation inspired by familiar reading features. Th
 
 ## Download and install
 
-**[Download Folio 0.9.0 beta for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.9.0/Folio-Android-v0.9.0.apk)**
+**[Download Folio 0.10.0 beta for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.10.0/Folio-Android-v0.10.0.apk)**
 
 Requires **Android 7.0 (API 24) or later on an ARM device (arm64-v8a or armeabi-v7a)** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
 
@@ -194,3 +194,16 @@ Open a book, open the audio player, and choose **Voice and language → Offline 
 Neural narration preserves the existing speed controls, timer, text transition, and background audio service. Progress follows sentences; within-sentence timing is estimated from playback duration. Generation speed and battery usage depend on the phone. Initial model loading and sentence generation can introduce pauses. Downloading requires at least 300 MB of free storage for installation. Keep the app open during the download.
 
 The original Folio source remains MIT-licensed. The neural Android binary includes GPL-3.0 eSpeak components and is distributed under GPL-3.0 terms for the combined binary. See [neural runtime notices and corresponding source links](NEURAL-NOTICES.md). The pinned runtime is downloaded by `scripts/prepare-neural-runtime.py` during the Android build; the AAR is excluded from Git.
+
+
+## Entrelinhas recommendations (Android 0.10.0 beta)
+
+The **Recomendações** tab opens Entrelinhas in a separate in-app WebView. The page has no Capacitor bridge, access to the library, or access to API keys. Sign in to ChatGPT when prompted. Some identity providers restrict embedded sign-in; an external-browser button is available, but browser and WebView sessions are separate.
+
+The suggested-book list reads the public **Livros** and **Livros do dia** worksheets from the same curation spreadsheet. It refreshes on launch, resume, and every five minutes while Folio is active; cached suggestions remain visible offline. This source is read-only and does not receive your reading history or notes.
+
+Automatic importing is enabled by default for this integration and can be disabled in **Recomendações → Livros sugeridos**. Configure your existing Anna’s Archive premium key in **Preferências**. Folio searches Anna’s Archive for each suggestion, filters EPUB results by title and author, selects the first matching edition in search order, downloads through the existing premium endpoint, validates the EPUB and its metadata, and adds it to the **Entrelinhas** collection. An optional direct HTTPS EPUB URL in the worksheet is also supported. Publisher landing pages are never treated as EPUB files.
+
+Transfers run sequentially while Folio is active and outside the reader. They use your account’s existing download allowance; no key is embedded in this repository. A verification challenge, connectivity failure, or exhausted quota can pause the queue. No CAPTCHA bypass is attempted. Unavailable books show a search button, and **Atualizar** retries pending or failed suggestions. Previously imported books are not automatically reimported after deletion. Imports do not overwrite existing reading progress or notes. This is not an Android background scheduler: the app must be open for the queue to advance.
+
+Validation covers the real public spreadsheet, mocked premium search/download through EPUB validation and persistent library import, duplicate prevention, wrong-author rejection, secure source redirects, mobile layout and the signed Android build. A real premium API transfer was verified with **The Craftsman** by Richard Sennett (recommended as **O artífice**): a 1,993,021-byte EPUB with the expected MD5 was imported, persisted and rendered by Folio. The native catalog parser also recognized a matching EPUB in an actual authenticated search response. Embedded ChatGPT login and execution on a physical phone still need device testing.

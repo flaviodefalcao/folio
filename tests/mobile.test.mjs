@@ -6,11 +6,11 @@ import { readFile, mkdir } from 'node:fs/promises';
 import JSZip from 'jszip';
 
 test('Android-sized reader: import, navigation, themes, bookmarks, search and panels',async()=>{
-  const preview=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','5194','--strictPort'],{cwd:new URL('..',import.meta.url),stdio:'ignore'});
+  const preview=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port','5234','--strictPort'],{cwd:new URL('..',import.meta.url),stdio:'ignore'});
   let browser;
   try {
     for(let i=0;i<60;i++) {
-      try{const response=await fetch('http://127.0.0.1:5194');if(response.ok)break;}catch{}
+      try{const response=await fetch('http://127.0.0.1:5234');if(response.ok)break;}catch{}
       await new Promise(resolve=>setTimeout(resolve,100));
     }
     browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{})});
@@ -18,7 +18,7 @@ test('Android-sized reader: import, navigation, themes, bookmarks, search and pa
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',error=>errors.push(error.message));
-    await page.goto('http://127.0.0.1:5194');
+    await page.goto('http://127.0.0.1:5234');
     await expect(page.getByRole('button',{name:'Ler A arte de ler devagar',exact:true})).toBeVisible();
     const noOverflow=async()=>assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),'The mobile document must not scroll horizontally.');
     await noOverflow();

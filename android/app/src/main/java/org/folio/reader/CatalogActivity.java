@@ -68,6 +68,8 @@ public class CatalogActivity extends AppCompatActivity {
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        boolean recommendations = "recommendations".equals(getIntent().getStringExtra("presentation"));
+        boolean dark = recommendations && !"light".equals(getSharedPreferences("folio_private", MODE_PRIVATE).getString("appTheme", "dark"));
         collectMode = getIntent().getStringExtra("collect"); if (collectMode == null) collectMode = "";
         try {
             origin = FolioPlugin.httpsURL(getIntent().getStringExtra("origin"));
@@ -75,16 +77,24 @@ public class CatalogActivity extends AppCompatActivity {
             if (!collectMode.isEmpty()) FolioPlugin.catalogLink(origin, target.toString());
         } catch (Exception error) { finish(); return; }
         client = FolioPlugin.publicClient();
-        LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(Color.rgb(245, 244, 239));
+        LinearLayout root = new LinearLayout(this); root.setOrientation(LinearLayout.VERTICAL); root.setBackgroundColor(dark ? Color.rgb(16, 18, 20) : Color.rgb(245, 244, 239));
         LinearLayout toolbar = new LinearLayout(this); toolbar.setOrientation(LinearLayout.HORIZONTAL);
         Button back = new Button(this); back.setText("‹"); back.setContentDescription("Página anterior"); back.setOnClickListener(v -> navigateBack());
         toolbar.addView(back, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        TextView title = new TextView(this); title.setText("Catálogo no Folio"); title.setTextColor(Color.rgb(26, 53, 51)); title.setTextSize(16); title.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView title = new TextView(this); title.setText(recommendations ? "Recomendações · Entrelinhas" : "Catálogo no Folio"); title.setTextColor(dark ? Color.WHITE : Color.rgb(26, 53, 51)); title.setTextSize(16); title.setGravity(android.view.Gravity.CENTER_VERTICAL);
         toolbar.addView(title, new LinearLayout.LayoutParams(0, dp(48), 1));
         Button close = new Button(this); close.setText("Fechar"); close.setOnClickListener(v -> finish()); toolbar.addView(close);
+        if (recommendations) {
+            Button external = new Button(this); external.setText("↗"); external.setContentDescription("Abrir no navegador para entrar");
+            external.setOnClickListener(v -> {
+                try { startActivity(new Intent(Intent.ACTION_VIEW, android.net.Uri.parse(RecommendationsSource.SITE))); }
+                catch (Exception ignored) { Toast.makeText(this, "Nenhum navegador disponível.", Toast.LENGTH_LONG).show(); }
+            });
+            toolbar.addView(external, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        }
         root.addView(toolbar);
-        status = new TextView(this); status.setText(origin.host()); status.setTextSize(12); status.setPadding(dp(12), dp(4), dp(12), dp(4)); root.addView(status);
-        useResults = new Button(this); useResults.setText(collectMode.equals("links") ? "Mostrar links no Folio" : "Usar resultados no Folio"); useResults.setEnabled(false); useResults.setOnClickListener(v -> collectResults()); root.addView(useResults);
+        status = new TextView(this); status.setText(origin.host()); status.setTextSize(12); status.setPadding(dp(12), dp(4), dp(12), dp(4)); root.addView(status); if (dark) status.setTextColor(Color.LTGRAY);
+        useResults = new Button(this); useResults.setText(collectMode.equals("links") ? "Mostrar links no Folio" : "Usar resultados no Folio"); useResults.setEnabled(false); useResults.setOnClickListener(v -> collectResults()); root.addView(useResults); if (recommendations) useResults.setVisibility(android.view.View.GONE);
         ProgressBar progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal); progress.setMax(100); root.addView(progress, new LinearLayout.LayoutParams(-1, dp(3)));
         browser = new WebView(this); root.addView(browser, new LinearLayout.LayoutParams(-1, 0, 1));
         setContentView(root);
@@ -94,7 +104,7 @@ public class CatalogActivity extends AppCompatActivity {
             return new WindowInsetsCompat.Builder(insets).setInsets(WindowInsetsCompat.Type.systemBars() | WindowInsetsCompat.Type.displayCutout() | WindowInsetsCompat.Type.ime(), Insets.NONE).build();
         });
         root.getViewTreeObserver().addOnGlobalLayoutListener(() -> { if (layoutInsets != null) layoutPadding(root, layoutInsets); });
-        WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), root); controller.setAppearanceLightStatusBars(true); controller.setAppearanceLightNavigationBars(true); ViewCompat.requestApplyInsets(root);
+        WindowInsetsControllerCompat controller = new WindowInsetsControllerCompat(getWindow(), root); controller.setAppearanceLightStatusBars(!dark); controller.setAppearanceLightNavigationBars(!dark); ViewCompat.requestApplyInsets(root);
         WebSettings settings = browser.getSettings(); settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false); settings.setAllowContentAccess(false); settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);

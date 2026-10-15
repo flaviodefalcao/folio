@@ -10,6 +10,8 @@ interface NativeAPI {
     eventName: string,
     listener: (data: any) => void,
   ): Promise<PluginListenerHandle>;
+  recommendationsFeed(): Promise<{base64: string}>;
+  openRecommendations(): Promise<void>;
   neuralVoices(): Promise<{voices: import("./types").NeuralVoice[]}>;
   downloadNeuralVoice(input: {id: string}): Promise<void>;
   beginKindleShare(): Promise<void>;
@@ -129,6 +131,8 @@ export function initializeNative() {
   );
   void native.addListener("neuralDownloadProgress", detail => window.dispatchEvent(new CustomEvent("folio-neural-download", {detail})));
   window.folio = {
+    recommendationsFeed: () => native.recommendationsFeed(),
+    openRecommendations: () => native.openRecommendations(),
     neuralVoices: () => native.neuralVoices(),
     downloadNeuralVoice: id => native.downloadNeuralVoice({id}),
     beginKindleShare: () => native.beginKindleShare(),

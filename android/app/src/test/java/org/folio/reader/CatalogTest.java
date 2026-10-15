@@ -48,6 +48,16 @@ public class CatalogTest {
         }
     }
 
+    @Test public void ordinaryDdosGuardCacheCommentDoesNotHideValidResults() throws Exception {
+        String html = "<title>A book - Search</title><script>// text/css for DDOS-GUARD caching</script>"
+            + "<div class='js-aarecord-list-outer'><a class='js-vim-focus' href='/md5/0123456789abcdef0123456789abcdef'>"
+            + "<h3>A book</h3><div class='italic'>An Author</div><div class='text-gray-500'>English [en], .epub, 2 MB</div></a></div>";
+        assertFalse(AnnaPremium.challenge(html, 200));
+        JSONObject result = FolioPlugin.parseCatalogHTML(html, base(), 1, 200);
+        assertFalse(result.optBoolean("challenge")); assertEquals(1, result.getJSONArray("results").length());
+        assertTrue(AnnaPremium.challenge("<title>DDoS-Guard</title>", 200));
+    }
+
     @Test public void distinguishesChangedMarkupFromARealEmptyResultsContainer() throws Exception {
         assertTrue(FolioPlugin.parseCatalogHTML("<html>Unknown page</html>", base(), 1, 200).has("error"));
         JSONObject empty = FolioPlugin.parseCatalogHTML("<div class='js-aarecord-list-outer'></div>", base(), 1, 200);
