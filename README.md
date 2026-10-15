@@ -6,7 +6,7 @@ Folio is an independent implementation inspired by familiar reading features. Th
 
 ## Download and install
 
-**[Download Folio 0.10.0 beta for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.10.0/Folio-Android-v0.10.0.apk)**
+**[Download Folio 0.10.1 beta for Android](https://github.com/flaviodefalcao/folio/releases/download/v0.10.1/Folio-Android-v0.10.1.apk)**
 
 Requires **Android 7.0 (API 24) or later on an ARM device (arm64-v8a or armeabi-v7a)** and an up-to-date Android System WebView. Open the APK on your phone and allow installation from the application used to download it when Android asks.
 
@@ -207,3 +207,8 @@ Automatic importing is enabled by default for this integration and can be disabl
 Transfers run sequentially while Folio is active and outside the reader. They use your account’s existing download allowance; no key is embedded in this repository. A verification challenge, connectivity failure, or exhausted quota can pause the queue. No CAPTCHA bypass is attempted. Unavailable books show a search button, and **Atualizar** retries pending or failed suggestions. Previously imported books are not automatically reimported after deletion. Imports do not overwrite existing reading progress or notes. This is not an Android background scheduler: the app must be open for the queue to advance.
 
 Validation covers the real public spreadsheet, mocked premium search/download through EPUB validation and persistent library import, duplicate prevention, wrong-author rejection, secure source redirects, mobile layout and the signed Android build. A real premium API transfer was verified with **The Craftsman** by Richard Sennett (recommended as **O artífice**): a 1,993,021-byte EPUB with the expected MD5 was imported, persisted and rendered by Folio. The native catalog parser also recognized a matching EPUB in an actual authenticated search response. Embedded ChatGPT login and execution on a physical phone still need device testing.
+
+
+### Mobile scrolling fix (0.10.1)
+
+Mobile screens reserve the bottom navigation height once. Previously, padding on the app shell, main area and library content accumulated into a large empty scroll range. The last content now ends 16 pixels above the navigation, and short pages do not become scrollable just to show blank space. Verified on the library, catalog, statistics and recommendations screens.

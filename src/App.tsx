@@ -1044,7 +1044,7 @@ export default function App() {
                 <span>
                   <BookOpen size={14} /> Feito para ler, pensar e descobrir.
                 </span>
-                <span>Folio · v0.10.0</span>
+                <span>Folio · v0.10.1</span>
               </footer>
             </>
           )}

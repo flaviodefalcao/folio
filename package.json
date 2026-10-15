@@ -1,7 +1,7 @@
 {
   "name": "folio-reader",
   "productName": "Folio",
-  "version": "0.10.0",
+  "version": "0.10.1",
   "description": "Leitor EPUB local e open source com conversa sobre livros",
   "type": "module",
   "main": "electron/main.cjs",
